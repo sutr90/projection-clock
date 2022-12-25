@@ -19,6 +19,8 @@ String content;
 bool testWifi(void);
 void launchWeb(void);
 void setupAP(void);
+void showTime(void);
+void createWebServer(void);
 
 Timezone Prague;
 
@@ -271,13 +273,13 @@ void createWebServer() {
         Serial.println("");
 
         Serial.println("writing eeprom ssid:");
-        for (int i = 0; i < qsid.length(); ++i) {
+        for (unsigned int i = 0; i < qsid.length(); ++i) {
           EEPROM.write(i, qsid[i]);
           Serial.print("Wrote: ");
           Serial.println(qsid[i]);
         }
         Serial.println("writing eeprom pass:");
-        for (int i = 0; i < qpass.length(); ++i) {
+        for (unsigned int i = 0; i < qpass.length(); ++i) {
           EEPROM.write(32 + i, qpass[i]);
           Serial.print("Wrote: ");
           Serial.println(qpass[i]);
