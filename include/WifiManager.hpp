@@ -7,21 +7,17 @@
 class WifiManager
 {
 private:
-    uint8_t _webPort;
+    uint8_t _resetPin;
     bool testWifi(void);
     void launchWeb(void);
     void setupAP(void);
     void createWebServer(void);
 
     ESP8266WebServer server;
-    int i = 0;
-    int statusCode;
-    const char* ssid = "text";
-    const char* passphrase = "text";
     String st;
     String content;
 public:
-    WifiManager(uint8_t webport = 80);
+    WifiManager(uint8_t resetPin, uint8_t webport = 80);
     void initialize();
 };
 
