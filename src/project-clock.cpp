@@ -4,6 +4,7 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <ezTime.h>
+#include "../include/Projector.hpp"
 
 //Variables
 int i = 0;
@@ -26,8 +27,15 @@ bool tzSynced = false;
 //Establishing Local server at port 80 whenever required
 ESP8266WebServer server(80);
 
+uint8_t dataPin = D2; // DATA
+uint8_t clkPin = D3; // WRITE
+uint8_t latchPin = D4; // CS
+Projector projector(dataPin, clkPin, latchPin);
+
 void setup() {
-  initializeModule();
+  projector.initializeModule();
+  projector.clearDisplay();
+
   Serial.begin(115200); //Initialising if(DEBUG)Serial Monitor
   Serial.println();
   Serial.println("Disconnecting previously connected WiFi");
@@ -101,106 +109,6 @@ void loop() {
   }
 }
 
-int dataPin = D2; // DATA
-int clkPin = D3; // WRITE
-int latchPin = D4; // CS
-
-inline void writeBitLow() {
-  digitalWrite(dataPin, LOW);
-  digitalWrite(clkPin, HIGH);
-  digitalWrite(clkPin, LOW);
-}
-
-inline void writeBitHigh() {
-  digitalWrite(dataPin, HIGH);
-  digitalWrite(clkPin, HIGH);
-  digitalWrite(clkPin, LOW);
-}
-
-inline void writeBit(unsigned char bits, unsigned char index) {
-  (bits & (1 << index)) == (1 << index) ? writeBitHigh() : writeBitLow();
-}
-
-void lcdShift(unsigned char address, unsigned char data) {
-  digitalWrite(latchPin, LOW);
-
-  // write header
-  writeBitHigh();
-  writeBitLow();
-  writeBitHigh();
-  // write address
-  writeBit(address, 5);
-  writeBit(address, 4);
-  writeBit(address, 3);
-  writeBit(address, 2);
-  writeBit(address, 1);
-  writeBit(address, 0);
-  // write segment
-  writeBit(data, 3);
-  writeBit(data, 2);
-  writeBit(data, 1);
-  writeBit(data, 0);
-
-  digitalWrite(latchPin, HIGH);
-}
-
-void initializeModule() {
-  pinMode(latchPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  pinMode(clkPin, OUTPUT);
-  
-  delay(100);
-
-  //100000000010
-  //100000000110
-  //100001010000
-
-  initFrame(0b000000, 0b010);
-  initFrame(0b000000, 0b110);
-  initFrame(0b001010, 0b000);
-
-  delay(3);
-
-  initFrame(0b000000, 0b010);
-  initFrame(0b000000, 0b110);
-  initFrame(0b001010, 0b000);
-
-  delay(200);
-}
-
-void initFrame(unsigned char address, unsigned char data) {
-  digitalWrite(latchPin, LOW);
-
-  // write header
-  writeBitHigh();
-  writeBitLow();
-  writeBitLow();
-  // write address
-  writeBit(address, 5);
-  writeBit(address, 4);
-  writeBit(address, 3);
-  writeBit(address, 2);
-  writeBit(address, 1);
-  writeBit(address, 0);
-  // write segment
-  writeBit(data, 2);
-  writeBit(data, 1);
-  writeBit(data, 0);
-
-  digitalWrite(latchPin, HIGH);
-}
-
-void clearDisplay() {
-  lcdShift(0b000100, 0);
-  lcdShift(0b000101, 0);
-  lcdShift(0b000110, 0);
-  lcdShift(0b000111, 0);
-  lcdShift(0b000000, 0);
-  lcdShift(0b000001, 0);
-  lcdShift(0b000010, 0);
-  lcdShift(0b000011, 0);
-}
-
 /*
   half0       half1        +-----+
   0: 1248     0: 14        | 0:1 |
@@ -234,10 +142,10 @@ void display2digits(byte value, byte unit) {
   byte ones = value % 10;
   byte tens = value / 10;
 
-  lcdShift(0 + unit, half0[tens]);
-  lcdShift(1 + unit, half1[tens]);
-  lcdShift(2 + unit, half0[ones]);
-  lcdShift(3 + unit, half1[ones] + (unit == HOURS ? 8 : 0));
+  projector.sendFrame(0 + unit, half0[tens]);
+  projector.sendFrame(1 + unit, half1[tens]);
+  projector.sendFrame(2 + unit, half0[ones]);
+  projector.sendFrame(3 + unit, half1[ones] + (unit == HOURS ? 8 : 0));
 }
 
 void showTime()
