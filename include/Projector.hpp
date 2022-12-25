@@ -1,5 +1,7 @@
 #ifndef Projector_hpp
 #define Projector_hpp
+
+#include <stdint.h>
 /*
 Class for controlling an LCD screen from the S282A projection clock. The display has 4 7-segment digits, colon separator, and 2 PM labels.
 Each digit is controlled using two frames, where each address corresponds to half of the digit - see below. The display is latching, 
