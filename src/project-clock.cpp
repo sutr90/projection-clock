@@ -4,6 +4,7 @@
 #include <ezTime.h>
 #include "../include/ClockProjector.hpp"
 #include "../include/WifiManager.hpp"
+#include <TM1637Display.h>
 
 Timezone timezone;
 
@@ -15,14 +16,36 @@ uint8_t latchPin = D4; // CS
 
 ClockProjector projector(dataPin, clkPin, latchPin);
 WifiManager wifiManager(D1, 80);
+TM1637Display display(D6, D5);
+
+void updateDisplay(bool colon)
+{
+  Serial.println("Prague time: " + timezone.dateTime());
+
+  uint8_t h = timezone.hour();
+  uint8_t m = timezone.minute();
+  projector.showTime(h, m);
+
+  uint8_t colonMask = colon ? 0b01000000 : 0;
+
+  display.showNumberDecEx(h, colonMask, true, 2, 0);
+  display.showNumberDecEx(m, colonMask, true, 2, 2);
+}
+
+bool lightOn = false;
 
 void setup()
 {
   projector.initializeModule();
   projector.clearDisplay();
-  
+
   Serial.begin(115200);
   wifiManager.initialize();
+
+  display.setBrightness(0x0f);
+  display.clear();
+
+  pinMode(D0, OUTPUT);
 }
 
 void loop()
@@ -38,13 +61,27 @@ void loop()
     {
       tzSynced = true;
       timezone.setLocation("Europe/Prague");
+      updateDisplay(false);
     }
 
     events();
+
     if (secondChanged())
     {
+      if (lightOn)
+      {
+        lightOn = false;
+        digitalWrite(D0, HIGH);
+      }
+      else
+      {
+        lightOn = true;
+        digitalWrite(D0, LOW);
+      }
+
+      updateDisplay(lightOn);
+
       Serial.println("Prague time: " + timezone.dateTime());
-      projector.showTime(timezone.hour(), timezone.minute());
     }
   }
   else
