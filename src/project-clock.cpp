@@ -4,7 +4,7 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <ezTime.h>
-#include "../include/Projector.hpp"
+#include "../include/ClockProjector.hpp"
 
 //Variables
 int i = 0;
@@ -19,10 +19,9 @@ String content;
 bool testWifi(void);
 void launchWeb(void);
 void setupAP(void);
-void showTime(void);
 void createWebServer(void);
 
-Timezone Prague;
+Timezone timezone;
 
 bool tzSynced = false;
 
@@ -32,7 +31,7 @@ ESP8266WebServer server(80);
 uint8_t dataPin = D2; // DATA
 uint8_t clkPin = D3; // WRITE
 uint8_t latchPin = D4; // CS
-Projector projector(dataPin, clkPin, latchPin);
+ClockProjector projector(dataPin, clkPin, latchPin);
 
 void setup() {
   projector.initializeModule();
@@ -96,64 +95,17 @@ void loop() {
 
     if (!tzSynced) {
       tzSynced = true;
-      Prague.setLocation("Europe/Prague");
+      timezone.setLocation("Europe/Prague");
     }
 
     events();
     if (secondChanged()) {
-      Serial.println("Prague time: " + Prague.dateTime());
-      showTime();
+      Serial.println("Prague time: " + timezone.dateTime());
+      projector.showTime(timezone.hour(), timezone.minute());
     }
-
-
   } else {
     tzSynced = false;
   }
-}
-
-/*
-  half0       half1        +-----+
-  0: 1248     0: 14        | 0:1 |
-  1: 0        1: 14      +-+-----+-+
-  2: 148      2: 12      |0|     |1|
-  3: 18       3: 124     |:|     |:|
-  4: 2        4: 124     |2|     |1|
-  5: 128      5: 24      +-+-----+-+
-  6: 1248     6: 24        | 1:2 |
-  7: 1        7: 14      +-+-----+-+
-  8: 1248     8: 124     |0|     |1|
-  9: 128      9: 124     |:|     |:|
-  A: 124      A: 124     |4|     |4|
-  b: 248      b: 24      +-+-----+-+
-  C: 1248     C: 0         | 0:8 |
-  D: 48       D: 124       +-----+
-  E: 1248     E: 2
-  F: 124      F: 2
-  L: 248      L: 0
-  o: 48       o: 24
-  n: 4        n: 24
-  t: 248      t: 2
-*/
-const byte half0[] = {15, 0, 13, 9, 2, 11, 15, 1, 15, 11, 7, 14, 15, 12, 15, 7, 0};
-const byte half1[] = {5, 5, 3, 7, 7, 6, 6, 5, 7, 7, 7, 6, 0, 7, 2, 2, 0};
-
-const byte HOURS = 0;
-const byte MINUTES = 4;
-
-void display2digits(byte value, byte unit) {
-  byte ones = value % 10;
-  byte tens = value / 10;
-
-  projector.sendFrame(0 + unit, half0[tens]);
-  projector.sendFrame(1 + unit, half1[tens]);
-  projector.sendFrame(2 + unit, half0[ones]);
-  projector.sendFrame(3 + unit, half1[ones] + (unit == HOURS ? 8 : 0));
-}
-
-void showTime()
-{
-    display2digits(Prague.hour(), HOURS);
-    display2digits(Prague.minute(), MINUTES);
 }
 
 //-------- Fuctions used for WiFi credentials saving and connecting to it which you do not need to change
