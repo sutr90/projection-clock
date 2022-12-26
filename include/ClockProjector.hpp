@@ -14,7 +14,6 @@ private:
     const uint8_t MINUTES = 4;
 
     void display2digits(uint8_t value, uint8_t unit, boolean colon);
-
 public:
     ClockProjector(uint8_t data_pin, uint8_t clock_pin, uint8_t latch_pin);
     void showTime(uint8_t hours, uint8_t minutes, boolean colon = false);

@@ -30,17 +30,17 @@ ClockProjector::ClockProjector(uint8_t data_pin, uint8_t clock_pin, uint8_t latc
 
 void ClockProjector::display2digits(uint8_t value, uint8_t unit, bool colon)
 {
-    uint8_t ones = value % 10;
-    uint8_t tens = value / 10;
+  uint8_t ones = value % 10;
+  uint8_t tens = value / 10;
 
-    sendFrame(0 + unit, half0[tens]);
-    sendFrame(1 + unit, half1[tens]);
-    sendFrame(2 + unit, half0[ones]);
-    sendFrame(3 + unit, half1[ones] + (unit == HOURS && colon ? 8 : 0));
+  sendFrame(0 + unit, half0[tens]);
+  sendFrame(1 + unit, half1[tens]);
+  sendFrame(2 + unit, half0[ones]);
+  sendFrame(3 + unit, half1[ones] + (unit == HOURS && colon ? 8 : 0));
 }
 
 void ClockProjector::showTime(uint8_t hours, uint8_t minutes, bool colon)
 {
-    display2digits(hours, HOURS, colon);
-    display2digits(minutes, MINUTES, false);
+  display2digits(hours, HOURS, colon);
+  display2digits(minutes, MINUTES, false);
 }

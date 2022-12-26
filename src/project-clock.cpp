@@ -10,6 +10,8 @@
 Timezone timezone;
 
 bool tzSynced = false;
+bool displayOn = true;
+bool colonOn = true;
 
 uint8_t dataPin = D2;  // DATA
 uint8_t clkPin = D3;   // WRITE
@@ -20,14 +22,17 @@ WifiManager wifiManager(D1, 80);
 TM1637Display display(D6, D5);
 OneButton btn = OneButton(
     D7,    // Input pin for the button
-    false, // Button is active LOW
-    false  // Enable internal pull-up resistor
+    true, // Button is active LOW
+    true  // Enable internal pull-up resistor
 );
 
 // Handler function for a single click:
 static void handleClick()
 {
-  Serial.println("Clicked!");
+  Serial.println("click");
+  displayOn = !displayOn;
+  digitalWrite(D0, displayOn ? LOW : HIGH);
+  display.setBrightness(0x7, displayOn);
 }
 
 void updateDisplay(bool colon)
@@ -44,8 +49,6 @@ void updateDisplay(bool colon)
   display.showNumberDecEx(m, colonMask, true, 2, 2);
 }
 
-bool colonOn = false;
-
 void setup()
 {
   projector.initializeModule();
@@ -58,7 +61,6 @@ void setup()
   display.clear();
 
   pinMode(D0, OUTPUT);
-  // Single Click event attachment
   btn.attachClick(handleClick);
 }
 
@@ -84,18 +86,8 @@ void loop()
 
     if (secondChanged())
     {
-      if (colonOn)
-      {
-        colonOn = false;
-      }
-      else
-      {
-        colonOn = true;
-      }
-
+      colonOn = !colonOn;
       updateDisplay(colonOn);
-
-      Serial.println("Prague time: " + timezone.dateTime());
     }
   }
   else
