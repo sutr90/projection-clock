@@ -5,6 +5,7 @@
 #include "../include/ClockProjector.hpp"
 #include "../include/WifiManager.hpp"
 #include <TM1637Display.h>
+#include <OneButton.h>
 
 Timezone timezone;
 
@@ -17,6 +18,17 @@ uint8_t latchPin = D4; // CS
 ClockProjector projector(dataPin, clkPin, latchPin);
 WifiManager wifiManager(D1, 80);
 TM1637Display display(D6, D5);
+OneButton btn = OneButton(
+    D7,    // Input pin for the button
+    false, // Button is active LOW
+    false  // Enable internal pull-up resistor
+);
+
+// Handler function for a single click:
+static void handleClick()
+{
+  Serial.println("Clicked!");
+}
 
 void updateDisplay(bool colon)
 {
@@ -24,7 +36,7 @@ void updateDisplay(bool colon)
 
   uint8_t h = timezone.hour();
   uint8_t m = timezone.minute();
-  projector.showTime(h, m);
+  projector.showTime(h, m, colon);
 
   uint8_t colonMask = colon ? 0b01000000 : 0;
 
@@ -32,7 +44,7 @@ void updateDisplay(bool colon)
   display.showNumberDecEx(m, colonMask, true, 2, 2);
 }
 
-bool lightOn = false;
+bool colonOn = false;
 
 void setup()
 {
@@ -46,10 +58,14 @@ void setup()
   display.clear();
 
   pinMode(D0, OUTPUT);
+  // Single Click event attachment
+  btn.attachClick(handleClick);
 }
 
 void loop()
 {
+  btn.tick();
+
   if ((WiFi.status() == WL_CONNECTED))
   {
     while (!waitForSync(30) && !tzSynced)
@@ -68,18 +84,16 @@ void loop()
 
     if (secondChanged())
     {
-      if (lightOn)
+      if (colonOn)
       {
-        lightOn = false;
-        digitalWrite(D0, HIGH);
+        colonOn = false;
       }
       else
       {
-        lightOn = true;
-        digitalWrite(D0, LOW);
+        colonOn = true;
       }
 
-      updateDisplay(lightOn);
+      updateDisplay(colonOn);
 
       Serial.println("Prague time: " + timezone.dateTime());
     }

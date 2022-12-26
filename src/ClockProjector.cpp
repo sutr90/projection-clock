@@ -28,7 +28,7 @@ ClockProjector::ClockProjector(uint8_t data_pin, uint8_t clock_pin, uint8_t latc
                                                                                          half0{15, 0, 13, 9, 2, 11, 15, 1, 15, 11, 7, 14, 15, 12, 15, 7, 0},
                                                                                          half1{5, 5, 3, 7, 7, 6, 6, 5, 7, 7, 7, 6, 0, 7, 2, 2, 0} {};
 
-void ClockProjector::display2digits(uint8_t value, uint8_t unit)
+void ClockProjector::display2digits(uint8_t value, uint8_t unit, bool colon)
 {
     uint8_t ones = value % 10;
     uint8_t tens = value / 10;
@@ -36,11 +36,11 @@ void ClockProjector::display2digits(uint8_t value, uint8_t unit)
     sendFrame(0 + unit, half0[tens]);
     sendFrame(1 + unit, half1[tens]);
     sendFrame(2 + unit, half0[ones]);
-    sendFrame(3 + unit, half1[ones] + (unit == HOURS ? 8 : 0));
+    sendFrame(3 + unit, half1[ones] + (unit == HOURS && colon ? 8 : 0));
 }
 
-void ClockProjector::showTime(uint8_t hours, uint8_t minutes)
+void ClockProjector::showTime(uint8_t hours, uint8_t minutes, bool colon)
 {
-    display2digits(hours, HOURS);
-    display2digits(minutes, MINUTES);
+    display2digits(hours, HOURS, colon);
+    display2digits(minutes, MINUTES, false);
 }
