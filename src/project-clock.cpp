@@ -6,6 +6,7 @@
 #include "../include/WifiManager.hpp"
 #include <TM1637Display.h>
 #include <OneButton.h>
+#include "../include/DebugSerial.hpp"
 
 Timezone timezone;
 
@@ -29,15 +30,15 @@ OneButton btn = OneButton(
 // Handler function for a single click:
 static void handleClick()
 {
-  Serial.println("click");
+  DEBUG_SERIAL.println("click");
   displayOn = !displayOn;
   digitalWrite(D0, displayOn ? LOW : HIGH);
-  display.setBrightness(0x7, displayOn);
+  display.setBrightness(0x1, displayOn);
 }
 
 void updateDisplay(bool colon)
 {
-  Serial.println("Prague time: " + timezone.dateTime());
+  DEBUG_SERIAL.println("Prague time: " + timezone.dateTime());
 
   uint8_t h = timezone.hour();
   uint8_t m = timezone.minute();
@@ -54,7 +55,7 @@ void setup()
   projector.initializeModule();
   projector.clearDisplay();
 
-  Serial.begin(115200);
+  DEBUG_SERIAL.begin(115200);
   wifiManager.initialize();
 
   display.setBrightness(0x0f);
@@ -72,7 +73,7 @@ void loop()
   {
     while (!waitForSync(30) && !tzSynced)
     {
-      Serial.println("Timezone Sync timeout!");
+      DEBUG_SERIAL.println("Timezone Sync timeout!");
     }
 
     if (!tzSynced)
