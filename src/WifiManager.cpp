@@ -4,7 +4,6 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include "../include/WifiManager.hpp"
-#include "../include/DebugSerial.hpp"
 
 WifiManager::WifiManager(uint8_t resetPin, uint8_t webport) : _resetPin{resetPin}, server{webport}
 {
@@ -12,63 +11,63 @@ WifiManager::WifiManager(uint8_t resetPin, uint8_t webport) : _resetPin{resetPin
 
 void WifiManager::initialize()
 {
-    DEBUG_SERIAL.println();
-    DEBUG_SERIAL.println("Disconnecting previously connected WiFi");
+    Serial.println();
+    Serial.println("Disconnecting previously connected WiFi");
     WiFi.disconnect();
 
     pinMode(_resetPin, INPUT_PULLUP);
     int sensorVal = digitalRead(_resetPin);
-    DEBUG_SERIAL.println();
-    DEBUG_SERIAL.print("button value ");
-    DEBUG_SERIAL.println(sensorVal);
+    Serial.println();
+    Serial.print("button value ");
+    Serial.println(sensorVal);
 
     if (sensorVal == HIGH)
     {
         EEPROM.begin(512); // Initialasing EEPROM
         delay(10);
-        DEBUG_SERIAL.println();
-        DEBUG_SERIAL.println();
-        DEBUG_SERIAL.println("Startup");
+        Serial.println();
+        Serial.println();
+        Serial.println("Startup");
 
         //---------------------------------------- Read EEPROM for SSID and pass
-        DEBUG_SERIAL.println("Reading EEPROM ssid");
+        Serial.println("Reading EEPROM ssid");
 
         String esid;
         for (uint8_t i = 0; i < 32; ++i)
         {
             esid += char(EEPROM.read(i));
         }
-        DEBUG_SERIAL.println();
-        DEBUG_SERIAL.print("SSID: ");
-        DEBUG_SERIAL.println(esid);
-        DEBUG_SERIAL.println("Reading EEPROM pass");
+        Serial.println();
+        Serial.print("SSID: ");
+        Serial.println(esid);
+        Serial.println("Reading EEPROM pass");
 
         String epass = "";
         for (uint8_t i = 32; i < 96; ++i)
         {
             epass += char(EEPROM.read(i));
         }
-        DEBUG_SERIAL.print("PASS: ");
-        DEBUG_SERIAL.println(epass);
+        Serial.print("PASS: ");
+        Serial.println(epass);
 
         WiFi.begin(esid.c_str(), epass.c_str());
 
         if (testWifi())
         {
-            DEBUG_SERIAL.println("Succesfully Connected!!!");
+            Serial.println("Succesfully Connected!!!");
             return;
         }
     }
-    DEBUG_SERIAL.println("Turning the HotSpot On");
+    Serial.println("Turning the HotSpot On");
     launchWeb();
     setupAP(); // Setup HotSpot
 
-    DEBUG_SERIAL.println();
-    DEBUG_SERIAL.println("Waiting.");
+    Serial.println();
+    Serial.println("Waiting.");
 
     while ((WiFi.status() != WL_CONNECTED))
     {
-        DEBUG_SERIAL.print(".");
+        Serial.print(".");
         delay(100);
         server.handleClient();
     }
@@ -77,7 +76,7 @@ void WifiManager::initialize()
 bool WifiManager::testWifi(void)
 {
     int c = 0;
-    DEBUG_SERIAL.println("Waiting for Wifi to connect");
+    Serial.println("Waiting for Wifi to connect");
     while (c < 20)
     {
         if (WiFi.status() == WL_CONNECTED)
@@ -85,29 +84,29 @@ bool WifiManager::testWifi(void)
             return true;
         }
         delay(500);
-        DEBUG_SERIAL.print("*");
+        Serial.print("*");
         c++;
     }
-    DEBUG_SERIAL.println("");
-    DEBUG_SERIAL.println("Connect timed out, opening AP");
+    Serial.println("");
+    Serial.println("Connect timed out, opening AP");
     return false;
 }
 
 void WifiManager::launchWeb()
 {
-    DEBUG_SERIAL.println("");
+    Serial.println("");
     if (WiFi.status() == WL_CONNECTED)
     {
-        DEBUG_SERIAL.println("WiFi connected");
+        Serial.println("WiFi connected");
     }
-    DEBUG_SERIAL.print("Local IP: ");
-    DEBUG_SERIAL.println(WiFi.localIP());
-    DEBUG_SERIAL.print("SoftAP IP: ");
-    DEBUG_SERIAL.println(WiFi.softAPIP());
+    Serial.print("Local IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("SoftAP IP: ");
+    Serial.println(WiFi.softAPIP());
     createWebServer();
     // Start the server
     server.begin();
-    DEBUG_SERIAL.println("Server started");
+    Serial.println("Server started");
 }
 
 void WifiManager::setupAP(void)
@@ -116,30 +115,30 @@ void WifiManager::setupAP(void)
     WiFi.disconnect();
     delay(100);
     int n = WiFi.scanNetworks();
-    DEBUG_SERIAL.println("scan done");
+    Serial.println("scan done");
     if (n == 0)
     {
-        DEBUG_SERIAL.println("no networks found");
+        Serial.println("no networks found");
     }
     else
     {
-        DEBUG_SERIAL.print(n);
-        DEBUG_SERIAL.println(" networks found");
+        Serial.print(n);
+        Serial.println(" networks found");
         for (uint8_t i = 0; i < n; ++i)
         {
             // Print SSID and RSSI for each network found
-            DEBUG_SERIAL.print(i + 1);
-            DEBUG_SERIAL.print(": ");
-            DEBUG_SERIAL.print(WiFi.SSID(i));
-            DEBUG_SERIAL.print(" (");
-            DEBUG_SERIAL.print(WiFi.RSSI(i));
-            DEBUG_SERIAL.print(")");
-            DEBUG_SERIAL.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+            Serial.print(i + 1);
+            Serial.print(": ");
+            Serial.print(WiFi.SSID(i));
+            Serial.print(" (");
+            Serial.print(WiFi.RSSI(i));
+            Serial.print(")");
+            Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
             delay(10);
         }
     }
 
-    DEBUG_SERIAL.println("");
+    Serial.println("");
     st = "<ol>";
     for (uint8_t i = 0; i < n; ++i)
     {
@@ -157,9 +156,9 @@ void WifiManager::setupAP(void)
     st += "</ol>";
     delay(100);
     WiFi.softAP("ProjectorClock", "");
-    DEBUG_SERIAL.println("softap");
+    Serial.println("softap");
     launchWeb();
-    DEBUG_SERIAL.println("over");
+    Serial.println("over");
 }
 
 void WifiManager::createWebServer()
@@ -192,26 +191,26 @@ void WifiManager::createWebServer()
       String qpass = server.arg("pass");
       int statusCode;
       if (qsid.length() > 0 && qpass.length() > 0) {
-        DEBUG_SERIAL.println("clearing eeprom");
+        Serial.println("clearing eeprom");
         for (uint8_t i = 0; i < 96; ++i) {
           EEPROM.write(i, 0);
         }
-        DEBUG_SERIAL.println(qsid);
-        DEBUG_SERIAL.println("");
-        DEBUG_SERIAL.println(qpass);
-        DEBUG_SERIAL.println("");
+        Serial.println(qsid);
+        Serial.println("");
+        Serial.println(qpass);
+        Serial.println("");
 
-        DEBUG_SERIAL.println("writing eeprom ssid:");
+        Serial.println("writing eeprom ssid:");
         for (uint8_t i = 0; i < qsid.length(); ++i) {
           EEPROM.write(i, qsid[i]);
-          DEBUG_SERIAL.print("Wrote: ");
-          DEBUG_SERIAL.println(qsid[i]);
+          Serial.print("Wrote: ");
+          Serial.println(qsid[i]);
         }
-        DEBUG_SERIAL.println("writing eeprom pass:");
+        Serial.println("writing eeprom pass:");
         for (uint8_t i = 0; i < qpass.length(); ++i) {
           EEPROM.write(32 + i, qpass[i]);
-          DEBUG_SERIAL.print("Wrote: ");
-          DEBUG_SERIAL.println(qpass[i]);
+          Serial.print("Wrote: ");
+          Serial.println(qpass[i]);
         }
         EEPROM.commit();
 
@@ -222,7 +221,7 @@ void WifiManager::createWebServer()
       } else {
         content = "{\"Error\":\"404 not found\"}";
         statusCode = 404;
-        DEBUG_SERIAL.println("Sending 404");
+        Serial.println("Sending 404");
       }
       server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(statusCode, "application/json", content); });
