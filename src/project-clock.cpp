@@ -15,7 +15,7 @@ bool colonOn = true;
 
 uint8_t dataPin = D2;  // DATA
 uint8_t clkPin = D3;   // WRITE
-uint8_t latchPin = D4; // CS
+uint8_t latchPin = D8; // CS, D4 is not used, as it is connected to the onboard LED
 
 ClockProjector projector(dataPin, clkPin, latchPin);
 WifiManager wifiManager(D1, 80);
